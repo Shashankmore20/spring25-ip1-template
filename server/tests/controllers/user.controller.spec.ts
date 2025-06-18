@@ -40,12 +40,12 @@ describe('Test userController', () => {
         username: mockUser.username,
         password: mockUser.password,
       };
-      saveUserSpy.mockResolvedValueOnce(mockSafeUser);
+      saveUserSpy.mockResolvedValueOnce({ ...mockSafeUser});
 
       const response = await supertest(app).post('/user/signup').send(mockReqBody);
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockUserJSONResponse);
+      expect(response.body).toEqual({ ...mockUserJSONResponse});
       expect(saveUserSpy).toHaveBeenCalledWith({ ...mockReqBody, dateJoined: expect.any(Date) });
     });
 
@@ -197,16 +197,14 @@ describe('Test userController', () => {
     });
 
     it('should return 500 if loginUser throws an exception', async () => {
-  loginUserSpy.mockRejectedValueOnce(new Error('Unexpected error'));
-
-  const response = await supertest(app).post('/user/login').send({
-    username: mockUser.username,
-    password: mockUser.password,
-  });
-
-  expect(response.status).toBe(500);
-  expect(response.text).toEqual('Login failed');
-});
+      loginUserSpy.mockRejectedValueOnce(new Error('Unexpected error'));
+      const response = await supertest(app).post('/user/login').send({
+        username: mockUser.username,
+        password: mockUser.password,
+      });
+      expect(response.status).toBe(500);
+      expect(response.text).toEqual('Login failed');
+    });
   });
 
   describe('PATCH /resetPassword', () => {
