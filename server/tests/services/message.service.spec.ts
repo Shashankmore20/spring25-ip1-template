@@ -1,5 +1,6 @@
 import MessageModel from '../../models/messages.model';
 import { getMessages, saveMessage } from '../../services/message.service';
+import mongoose from 'mongoose';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const mockingoose = require('mockingoose');
@@ -33,17 +34,40 @@ describe('Message model', () => {
 
       expect(savedMessage).toMatchObject(message1);
     });
-    // TODO: Task 2 - Write a test case for saveMessage when an error occurs
+    it('should return an error if saving the message fails', async () => {
+      jest.spyOn(MessageModel, 'create').mockRejectedValueOnce(new Error('Database save failed'));
+      const result = await saveMessage(message1);
+      
+      expect(result).toHaveProperty('error');
+      if ('error' in result) {
+        expect(result.error).toContain('Error when saving a message');
+      }
+    });
+
+    it('should return an error if create() returns null', async () => {
+      jest.spyOn(MessageModel, 'create').mockResolvedValueOnce(null as any);
+      const result = await saveMessage(message1);
+      
+      expect(result).toHaveProperty('error');
+      expect((result as any).error).toContain('Database save failed');
+    });
   });
 
   describe('getMessages', () => {
     it('should return all messages, sorted by date', async () => {
-      mockingoose(MessageModel).toReturn([message2, message1], 'find');
+      mockingoose(MessageModel).toReturn([message1, message2], 'find');
 
       const messages = await getMessages();
 
       expect(messages).toMatchObject([message1, message2]);
     });
-    // TODO: Task 2 - Write a test case for getMessages when an error occurs
+    
+    it('should return an empty array if error when retrieving messages', async () => {
+      mockingoose(MessageModel).toReturn(new Error('Error retrieving documents'), 'find');
+
+      const messages = await getMessages();
+
+      expect(messages).toEqual([]);
+    });
   });
 });
